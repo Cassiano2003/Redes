@@ -1,3 +1,5 @@
+package Comunicacao.Server;
+
 import java.net.*;
 import java.io.*;
 import java.util.*;
@@ -5,6 +7,8 @@ import java.util.concurrent.Executors;
 
 
 public class DateServer {
+
+    private List<Usuarios> usuarios = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         try {
@@ -19,41 +23,44 @@ public class DateServer {
 
             List<Socket> clients = new ArrayList<>();
 
-            new Thread(() -> {
-                for (Socket c : clients) {
-                    try {
-                        BufferedReader bin = new BufferedReader(
-                                new InputStreamReader(c.getInputStream())
-                        );
-                        String line;
-                            while ((line = bin.readLine()) != null) {
-                                // Vai enviar a mensagem para todos os outros clientes, exceto o remetene
-                                for (Socket other : clients) {
-                                    if (other != c) {
-                                        PrintWriter otherPout = new PrintWriter(
-                                            other.getOutputStream(), true
-                                        );
-                                        otherPout.println(line);
-                                    }
-                                }
-                            }
-                        } catch (IOException e) {
-                            System.err.println("Connection closed.");
-                        }
-                    }
-                }
-            ).start();
-
             // Adiciona o cliente à lista de clientes conectados
             while (true) {
                 Socket client = sock.accept();
                 clients.add(client);
+                usuarios.add(new Usuarios(client.getInetAddress().getHostName(), client.getInetAddress().getHostAddress()));
 
                 System.out.println("Client connected: " +
                 client.getInetAddress().getHostAddress());
+                // Responde ao cliente em uma nova thread
+                new Thread(() -> responceClient(client, clients)).start();
             }
+
+            System.out.println("Server closed.");
+            System.out.println("Connected users: " + usuarios);
         } catch (IOException ioe) {
             System.err.println(ioe);
+        }
+    }
+
+    private void responceClient(Socket client, List<Socket> clients) {
+        try {
+            BufferedReader bin = new BufferedReader(
+                new InputStreamReader(client.getInputStream())
+            );
+            String line;
+            while ((line = bin.readLine()) != null) {
+                // Vai enviar a mensagem para todos os outros clientes, exceto o remetene
+                for (Socket other : clients) {
+                    if (other != client) {
+                        PrintWriter otherPout = new PrintWriter(
+                            other.getOutputStream(), true
+                        );
+                        otherPout.println(client.getInetAddress().getHostName() + ": " + line);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Connection closed.");
         }
     }
 

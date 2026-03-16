@@ -61,7 +61,11 @@ public class DateClient{
             DatagramPacket packet = new DatagramPacket(
                     data,
                     data.length,
-                    InetAddress.getByName("255.255.255.255"),
+                    NetworkInterface.getNetworkInterfaces()
+                            .nextElement()
+                            .getInterfaceAddresses()
+                            .get(0)
+                            .getBroadcast(),
                     8888
             );
     
@@ -72,7 +76,13 @@ public class DateClient{
             DatagramPacket response =
                     new DatagramPacket(buffer, buffer.length);
     
-            teste.receive(response);
+            teste.setSoTimeout(2000);
+
+            try{
+                teste.receive(response);
+            }catch(SocketTimeoutException e){
+                System.out.println("Timeout waiting for server");
+            }
     
             String msg = new String(response.getData(),0,response.getLength());
     
