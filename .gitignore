@@ -1,4 +1,4 @@
 # Ignore all .class files in the Comunicacao directory
-Comunicacao/*.class
+#Comunicacao/*.class
 # Ignore all .class files in the Server directory
 Comunicacao/Server/*.class
