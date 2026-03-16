@@ -18,36 +18,36 @@ public class DateServer {
             discoverServer();
 
             ServerSocket sock = new ServerSocket(6013);
-            sock.setSoTimeout(30000); // 10 segundos
 
             System.out.println("Server IP: " +
             InetAddress.getLocalHost().getHostAddress());
 
             List<Socket> clients = new ArrayList<>();
 
-            // Adiciona o cliente à lista de clientes conectados
-            while (true) {
-                Socket client = sock.accept();
-                clients.add(client);
-                usuarios.add(new Usuarios(client.getInetAddress().getHostName(), client.getInetAddress().getHostAddress()));
+            long start = System.currentTimeMillis();
+            long maxTime = 600000; // 10 min
 
+            sock.setSoTimeout(10000); // 10 seconds
+            
+            while (System.currentTimeMillis() - start < maxTime) {
+
+                try {
+                    Socket client = sock.accept();
+                    clients.add(client);
+                    System.out.println("New client connected: " + client.getInetAddress().getHostName());
+                    new Thread(() -> responceClient(client, clients)).start();
+                } catch (SocketTimeoutException ignored) {
+                }
                 
-                // Responde ao cliente em uma nova thread
-                new Thread(() -> responceClient(client, clients)).start();
-
                 if (clients.size() >= 10) {
                     System.out.println("Maximum clients reached. No longer accepting new connections.");
                     break;
                 }
-
-                // Desliga o servidor após 10 minutos
-                if (clients == null && System.currentTimeMillis() - sock.getSoTimeout() > 300000) {
-                    System.out.println("Server timeout. Shutting down.");
-                    break;
-                }
-                
-                System.out.println("Connected users: " + usuarios);
             }
+            
+            System.out.println("Server timeout. Shutting down.");
+            sock.close();
+            System.out.println("Connected users: " + usuarios);
 
         } catch (IOException ioe) {
             System.err.println(ioe);
