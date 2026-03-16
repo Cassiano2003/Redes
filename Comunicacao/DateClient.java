@@ -48,7 +48,7 @@ public class DateClient{
                     break;
                 }
                 // Sem mensagens vazias
-                if(!mensagem.isEmpty()){
+                if(!mensagem.isEmpty() && !mensagem.trim().isEmpty()){
                     pout.println(mensagem);
                 }
             }

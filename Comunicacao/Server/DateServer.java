@@ -67,7 +67,7 @@ public class DateServer {
                         PrintWriter otherPout = new PrintWriter(
                             other.getOutputStream(), true
                         );
-                        otherPout.println(client.getInetAddress().getHostName() + ": " + line);
+                        otherPout.println("\n" + client.getInetAddress().getHostName() + ": " + line);
                     }
                 }
             }
