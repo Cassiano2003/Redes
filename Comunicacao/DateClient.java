@@ -43,10 +43,14 @@ public class DateClient{
             while(true){
                 System.out.print(InetAddress.getLocalHost().getHostName() + ": ");
                 String mensagem = scanner.nextLine();
-                if(mensagem.equalsIgnoreCase("exit")){
+                // Encerra a conexão se o usuário digitar "exit"
+                if(mensagem.equals("exit")){
                     break;
                 }
-                pout.println(mensagem);
+                // Sem mensagens vazias
+                if(!mensagem.isEmpty()){
+                    pout.println(mensagem);
+                }
             }
         }
         catch (IOException ioe) {
