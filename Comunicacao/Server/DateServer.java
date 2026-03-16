@@ -18,7 +18,7 @@ public class DateServer {
             discoverServer();
 
             ServerSocket sock = new ServerSocket(6013);
-            //sock.setSoTimeout(10000); // 10 segundos
+            sock.setSoTimeout(30000); // 10 segundos
 
             System.out.println("Server IP: " +
             InetAddress.getLocalHost().getHostAddress());
@@ -35,8 +35,14 @@ public class DateServer {
                 // Responde ao cliente em uma nova thread
                 new Thread(() -> responceClient(client, clients)).start();
 
-                if (clients.size() >= 5) {
+                if (clients.size() >= 10) {
                     System.out.println("Maximum clients reached. No longer accepting new connections.");
+                    break;
+                }
+
+                // Desliga o servidor após 10 minutos
+                if (clients == null && System.currentTimeMillis() - sock.getSoTimeout() > 300000) {
+                    System.out.println("Server timeout. Shutting down.");
                     break;
                 }
                 

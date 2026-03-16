@@ -41,7 +41,11 @@ public class DateClient{
             }).start();
 
             while(true){
+                System.out.print(InetAddress.getLocalHost().getHostName() + ": ");
                 String mensagem = scanner.nextLine();
+                if(mensagem.equalsIgnoreCase("exit")){
+                    break;
+                }
                 pout.println(mensagem);
             }
         }
