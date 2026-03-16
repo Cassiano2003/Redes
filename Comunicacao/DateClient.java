@@ -33,8 +33,7 @@ public class DateClient{
                 try {
                     String line;
                     while ((line = bin.readLine()) != null) {
-                        System.out.println(line);
-                        System.out.print(InetAddress.getLocalHost().getHostName() + ": ");
+                        System.out.println(line+"\n");
                     }
                 } catch (IOException e) {
                     System.err.println("Connection closed.");
