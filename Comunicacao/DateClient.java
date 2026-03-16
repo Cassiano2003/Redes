@@ -11,11 +11,24 @@ public class DateClient{
     public static void main(String[] args) throws Exception {
         
         try {
-    
-            String msg = discoverServer();
 
-            String serverIP = msg.split(":")[0];
-            String serverPort = msg.split(":")[1];
+            String serverIP = "localhost";
+            String serverPort = "6013";
+
+            System.out.println("Ir manualmente ou altomaticamente? (digite 'manual' ou 'auto')");
+            String escolha = scanner.nextLine();
+            if (escolha.equalsIgnoreCase("auto")) {
+                String msg = discoverServer();
+                serverIP = msg.split(":")[0];
+                serverPort = msg.split(":")[1];
+            }else{
+                System.out.print("Digite o IP do servidor: ");
+                serverIP = scanner.nextLine();
+                System.out.print("Digite a porta do servidor: ");
+                serverPort = scanner.nextLine();
+            }
+
+
 
             Socket sock = new Socket(serverIP, Integer.parseInt(serverPort));
 

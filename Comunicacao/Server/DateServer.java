@@ -81,6 +81,29 @@ public class DateServer {
             }
         } catch (IOException e) {
             System.err.println("Connection closed.");
+        } finally {
+            usuarioDesconectado(client, clients);
+            try {
+                client.close();
+            } catch (IOException ignored) {}
+
+        }
+    }
+
+    private static void usuarioDesconectado(Socket client, List<Socket> clients) {
+        for (Socket other : clients) {
+            if (other != client) {
+                try {
+                    PrintWriter otherPout = new PrintWriter(
+                        other.getOutputStream(), true
+                    );
+
+                    otherPout.println("\n" + client.getInetAddress().getHostName() + " has disconnected.");
+
+                } catch (IOException e) {
+                    System.out.println("Error sending disconnect message.");
+                }
+            }
         }
     }
 
