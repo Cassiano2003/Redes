@@ -19,22 +19,13 @@ public class DateServer {
 
             List<Socket> clients = new ArrayList<>();
 
-            // Adiciona o cliente à lista de clientes conectados
-            while (true) {
-                Socket client = sock.accept();
-                clients.add(client);
-
-                System.out.println("Client connected: " +
-                client.getInetAddress().getHostAddress());
-
-                
+            new Thread(() -> {
                 for (Socket c : clients) {
-                    BufferedReader bin = new BufferedReader(
-                            new InputStreamReader(client.getInputStream())
-                    );
-                    new Thread(() -> {
-                        try {
-                            String line;
+                    try {
+                        BufferedReader bin = new BufferedReader(
+                                new InputStreamReader(c.getInputStream())
+                        );
+                        String line;
                             while ((line = bin.readLine()) != null) {
                                 // Vai enviar a mensagem para todos os outros clientes, exceto o remetene
                                 for (Socket other : clients) {
@@ -49,8 +40,17 @@ public class DateServer {
                         } catch (IOException e) {
                             System.err.println("Connection closed.");
                         }
-                    }).start();
+                    }
                 }
+            ).start();
+
+            // Adiciona o cliente à lista de clientes conectados
+            while (true) {
+                Socket client = sock.accept();
+                clients.add(client);
+
+                System.out.println("Client connected: " +
+                client.getInetAddress().getHostAddress());
             }
         } catch (IOException ioe) {
             System.err.println(ioe);
