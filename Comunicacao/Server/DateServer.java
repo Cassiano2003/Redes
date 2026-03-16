@@ -34,8 +34,9 @@ public class DateServer {
                 try {
                     Socket client = sock.accept();
                     clients.add(client);
+                    usuarios.add(new Usuarios(client.getInetAddress().getHostName(), client.getInetAddress().getHostAddress()));
                     System.out.println("New client connected: " + client.getInetAddress().getHostName());
-                    new Thread(() -> responceClient(client, clients)).start();
+                    new Thread(() -> responceClient(client, clients, usuarios)).start();
                 } catch (SocketTimeoutException ignored) {
                 }
                 
@@ -48,19 +49,26 @@ public class DateServer {
             System.out.println("Server timeout. Shutting down.");
             sock.close();
             System.out.println("Connected users: " + usuarios);
-
+            System.exit(0);
         } catch (IOException ioe) {
             System.err.println(ioe);
         }
     }
 
-    private static void responceClient(Socket client, List<Socket> clients) {
+    private static void responceClient(Socket client, List<Socket> clients, List<Usuarios> usuarios) {
         try {
             BufferedReader bin = new BufferedReader(
                 new InputStreamReader(client.getInputStream())
             );
             String line;
             while ((line = bin.readLine()) != null) {
+                Usuarios usuario = usuarios.stream()
+                    .filter(u -> u.getIp().equals(client.getInetAddress().getHostAddress()))
+                    .findFirst()
+                    .orElse(null);
+                if (usuario != null) {
+                    usuario.addMensagem(line);
+                }
                 // Vai enviar a mensagem para todos os outros clientes, exceto o remetene
                 for (Socket other : clients) {
                     if (other != client) {

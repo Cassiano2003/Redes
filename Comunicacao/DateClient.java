@@ -33,15 +33,15 @@ public class DateClient{
                 try {
                     String line;
                     while ((line = bin.readLine()) != null) {
-                        System.out.println(line+"\n"+InetAddress.getLocalHost().getHostName() + ": ");
+                        System.out.println(line);
                     }
                 } catch (IOException e) {
                     System.err.println("Connection closed.");
                 }
             }).start();
 
+            System.out.print("Escrevas suas mensagens (digite 'exit' para sair): ");
             while(true){
-                System.out.print(InetAddress.getLocalHost().getHostName() + ": ");
                 String mensagem = scanner.nextLine();
                 // Encerra a conexão se o usuário digitar "exit"
                 if(mensagem.trim().equalsIgnoreCase("exit")){
