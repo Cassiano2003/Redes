@@ -19,40 +19,38 @@ public class DateServer {
 
             List<Socket> clients = new ArrayList<>();
 
-            
-
+            // Adiciona o cliente à lista de clientes conectados
             while (true) {
                 Socket client = sock.accept();
                 clients.add(client);
 
                 System.out.println("Client connected: " +
                 client.getInetAddress().getHostAddress());
+
+                
                 for (Socket c : clients) {
-
                     BufferedReader bin = new BufferedReader(
-                        new InputStreamReader(c.getInputStream())
+                            new InputStreamReader(client.getInputStream())
                     );
-
-                    PrintWriter pout = new PrintWriter(
-                        c.getOutputStream(), true
-                    );
-
-                    Thread thread = new Thread(() -> {
+                    new Thread(() -> {
                         try {
                             String line;
                             while ((line = bin.readLine()) != null) {
-                                pout.println("Message from client " +
-                                c.getInetAddress().getHostAddress() + ": " + line);
+                                // Vai enviar a mensagem para todos os outros clientes, exceto o remetene
+                                for (Socket other : clients) {
+                                    if (other != c) {
+                                        PrintWriter otherPout = new PrintWriter(
+                                            other.getOutputStream(), true
+                                        );
+                                        otherPout.println(line);
+                                    }
+                                }
                             }
                         } catch (IOException e) {
                             System.err.println("Connection closed.");
                         }
-                    });
-                    thread.start();
-                    
-                    thread.destroy();
+                    }).start();
                 }
-                System.out.println(clients);
             }
         } catch (IOException ioe) {
             System.err.println(ioe);
