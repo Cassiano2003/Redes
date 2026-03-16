@@ -4,11 +4,13 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.Executors;
+import java.util.List;
+import java.util.ArrayList;
 
 
 public class DateServer {
 
-    private List<Usuarios> usuarios = new ArrayList<>();
+    private static List<Usuarios> usuarios = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         try {
@@ -29,20 +31,24 @@ public class DateServer {
                 clients.add(client);
                 usuarios.add(new Usuarios(client.getInetAddress().getHostName(), client.getInetAddress().getHostAddress()));
 
-                System.out.println("Client connected: " +
-                client.getInetAddress().getHostAddress());
+                
                 // Responde ao cliente em uma nova thread
                 new Thread(() -> responceClient(client, clients)).start();
+
+                if (clients.size() >= 5) {
+                    System.out.println("Maximum clients reached. No longer accepting new connections.");
+                    break;
+                }
+                
+                System.out.println("Connected users: " + usuarios);
             }
 
-            System.out.println("Server closed.");
-            System.out.println("Connected users: " + usuarios);
         } catch (IOException ioe) {
             System.err.println(ioe);
         }
     }
 
-    private void responceClient(Socket client, List<Socket> clients) {
+    private static void responceClient(Socket client, List<Socket> clients) {
         try {
             BufferedReader bin = new BufferedReader(
                 new InputStreamReader(client.getInputStream())

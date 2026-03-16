@@ -1,12 +1,11 @@
 package Comunicacao.Server;
 
 
-
 public class Usuarios {
     private String nome;
     private String ip;
 
-    pubic Usuarios(String nome, String ip) {
+    public Usuarios(String nome, String ip) {
         this.nome = nome;
         this.ip = ip;
     }
