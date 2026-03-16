@@ -61,11 +61,7 @@ public class DateClient{
             DatagramPacket packet = new DatagramPacket(
                     data,
                     data.length,
-                    NetworkInterface.getNetworkInterfaces()
-                            .nextElement()
-                            .getInterfaceAddresses()
-                            .get(0)
-                            .getBroadcast(),
+                    NetworkInterface.getNetworkInterfaces(),
                     8888
             );
     
