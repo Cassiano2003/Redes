@@ -74,30 +74,75 @@ public class DateClient{
 
     private static String discoverServer() {
         try {
-            DatagramSocket teste = new DatagramSocket();
+            DatagramSocket pacotes = new DatagramSocket();
     
-            teste.setBroadcast(true);
+            pacotes.setBroadcast(true);
+            pacotes.setSoTimeout(20000); // 2 segundos de timeout para esperar a resposta do servidor
     
             byte[] data = "DISCOVER_SERVER".getBytes();
+
+            // Tenta enviar o pacote para o endereço de broadcast da rede
+            DatagramPacket packet = null; // Inicializa o pacote como null para verificar se foi configurado corretamente
+
+            try {
+                // Itera sobre as interfaces de rede para encontrar o endereço de broadcast
+                Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+
+                // Para cada interface, verifica se é ativa e não é de loopback, e tenta obter o endereço de broadcast
+                while (interfaces.hasMoreElements()) {
+                    // Obtém a próxima interface de rede
+                    NetworkInterface ni = interfaces.nextElement();
+
+                    // Verifica se a interface é ativa e não é de loopback
+                    if (!ni.isLoopback() && ni.isUp()) {
+
+                        // Para cada endereço associado à interface, tenta obter o endereço de broadcast
+                        for (InterfaceAddress ia : ni.getInterfaceAddresses()) {
+
+                            // Obtém o endereço de broadcast da interface
+                            InetAddress broadcast = ia.getBroadcast();
+
+                            // Se o endereço de broadcast for válido, configura o pacote para ser enviado para esse endereço
+                            if (broadcast != null) {
+
+                                packet = new DatagramPacket(
+                                    data,
+                                    data.length,
+                                    broadcast,
+                                    8888
+                                );
+
+                                break;
+                            }
+                        }
+                    }
+
+                    if (packet != null) break;
+                }
+
+                // Se não foi possível configurar o pacote para um endereço de broadcast válido, configura o pacote para ser enviado para o endereço de broadcast global
+                if (packet == null) {
+                    packet = new DatagramPacket(
+                        data,
+                        data.length,
+                        InetAddress.getByName("255.255.255.255"),
+                        8888
+                    );
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
     
-            DatagramPacket packet = new DatagramPacket(
-                    data,
-                    data.length,
-                    InetAddress.getByName("255.255.255.255"),
-                    8888
-            );
-    
-            teste.send(packet);
+            pacotes.send(packet);
     
             byte[] buffer = new byte[256];
     
             DatagramPacket response =
                     new DatagramPacket(buffer, buffer.length);
-    
-            teste.setSoTimeout(2000);
 
             try{
-                teste.receive(response);
+                pacotes.receive(response);
             }catch(SocketTimeoutException e){
                 System.out.println("Timeout waiting for server");
             }
