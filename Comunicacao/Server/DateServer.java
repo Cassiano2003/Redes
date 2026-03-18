@@ -25,7 +25,7 @@ public class DateServer {
             List<Socket> clients = new ArrayList<>();
 
             long start = System.currentTimeMillis();
-            long maxTime = 600000; // 10 min
+            long maxTime = 100000; // 1 min
 
             sock.setSoTimeout(10000); // 10 seconds
             
