@@ -16,15 +16,23 @@ public class DateClient{
         
         try {
 
-            String serverIP = "localhost";
-            String serverPort = "6013";
+            String serverIP;
+            String serverPort;
 
             System.out.println("Ir manualmente ou altomaticamente? (digite 'manual' ou 'auto')");
             String escolha = scanner.nextLine();
             if (escolha.equalsIgnoreCase("auto")) {
                 String msg = discoverServer();
-                serverIP = msg.split(":")[0];
-                serverPort = msg.split(":")[1];
+                if (msg == null) {
+                    System.out.print("Digite o IP do servidor: ");
+                    serverIP = scanner.nextLine();
+                    System.out.print("Digite a porta do servidor: ");
+                    serverPort = scanner.nextLine();
+                }else{
+                    System.out.println("Conectando ao servidor: " + msg);   
+                    serverIP = msg.split(":")[0];
+                    serverPort = msg.split(":")[1];
+                }
             }else{
                 System.out.print("Digite o IP do servidor: ");
                 serverIP = scanner.nextLine();

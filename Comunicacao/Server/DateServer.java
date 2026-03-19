@@ -15,9 +15,10 @@ public class DateServer {
     public static void main(String[] args) throws Exception {
         try {
 
-            discoverServer();
+            int port = 6969;
+            discoverServer(port);
 
-            ServerSocket sock = new ServerSocket(6013);
+            ServerSocket sock = new ServerSocket(port);
 
             System.out.println("Server IP: " +
             InetAddress.getLocalHost().getHostAddress());
@@ -118,10 +119,10 @@ public class DateServer {
         }
     }
 
-    private static void discoverServer() {
+    private static void discoverServer(int port) {
         new Thread(() -> {
             try {
-                DatagramSocket socket = new DatagramSocket(8888);
+                DatagramSocket socket = new DatagramSocket(port);
 
                 byte[] buffer = new byte[256];
 
@@ -138,7 +139,7 @@ public class DateServer {
 
                     if(msg.equals("DISCOVER_SERVER")){
 
-                        String response = InetAddress.getLocalHost().getHostAddress() + ":6013";
+                        String response = InetAddress.getLocalHost().getHostAddress() + ":" + port;
 
                         DatagramPacket reply = new DatagramPacket(
                                 response.getBytes(),
