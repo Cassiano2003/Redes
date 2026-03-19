@@ -6,6 +6,7 @@ import java.util.concurrent.Executors;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
 
 public class DateClient{
 
@@ -56,18 +57,24 @@ public class DateClient{
                 }
             }).start();
 
-            System.out.print("Escrevas suas mensagens (digite 'exit' para sair): ");
-            while(true){
-                String mensagem = scanner.nextLine();
-                // Encerra a conexão se o usuário digitar "exit"
-                if(mensagem.trim().equalsIgnoreCase("exit")){
-                    sock.close();
-                    break;
+            try {
+                System.out.print("Escrevas suas mensagens (digite 'exit' para sair): ");
+                while(true){
+                    String mensagem = scanner.nextLine();
+                    // Encerra a conexão se o usuário digitar "exit"
+                    if(mensagem.trim().equalsIgnoreCase("exit")){
+                        sock.close();
+                        break;
+                    }
+                    // Sem mensagens vazias
+                    if(!mensagem.isEmpty() && !mensagem.trim().isEmpty()){
+                        pout.println(mensagem);
+                    }
                 }
-                // Sem mensagens vazias
-                if(!mensagem.isEmpty() && !mensagem.trim().isEmpty()){
-                    pout.println(mensagem);
-                }
+            }catch (SocketException e) {
+                System.out.println("\nConnection lost. Exiting...");
+                sock.close();
+                System.exit(0);
             }
         }
         catch (IOException ioe) {
@@ -77,87 +84,70 @@ public class DateClient{
 
     private static String discoverServer() {
         try {
-            DatagramSocket pacotes = new DatagramSocket();
-    
-            pacotes.setBroadcast(true);
-            pacotes.setSoTimeout(20000); // 2 segundos de timeout para esperar a resposta do servidor
-    
+            DatagramSocket socket = new DatagramSocket();
+            socket.setBroadcast(true);
+            socket.setSoTimeout(5000); // 5 segundos costumam ser suficientes para resposta local
+
             byte[] data = "DISCOVER_SERVER".getBytes();
+            boolean sentAtLeastOne = false;
 
-            // Tenta enviar o pacote para o endereço de broadcast da rede
-            DatagramPacket packet = null; // Inicializa o pacote como null para verificar se foi configurado corretamente
+            // Itera sobre as interfaces de rede
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
 
-            try {
-                // Itera sobre as interfaces de rede para encontrar o endereço de broadcast
-                Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface ni = interfaces.nextElement();
 
-                // Para cada interface, verifica se é ativa e não é de loopback, e tenta obter o endereço de broadcast
-                while (interfaces.hasMoreElements()) {
-                    // Obtém a próxima interface de rede
-                    NetworkInterface ni = interfaces.nextElement();
+                // Pula interfaces inativas ou de loopback
+                if (ni.isLoopback() || !ni.isUp()) continue;
 
-                    // Verifica se a interface é ativa e não é de loopback
-                    if (!ni.isLoopback() && ni.isUp()) {
+                for (InterfaceAddress ia : ni.getInterfaceAddresses()) {
+                    InetAddress broadcast = ia.getBroadcast();
+                    
+                    if (broadcast != null) {
+                        DatagramPacket packet = new DatagramPacket(data, data.length, broadcast, 8888);
+                        
+                        socket.send(packet); // Envia o pacote
+                        sentAtLeastOne = true;
+                        
+                        System.out.println("Enviando broadcast para: " + broadcast.getHostAddress());
 
-                        // Para cada endereço associado à interface, tenta obter o endereço de broadcast
-                        for (InterfaceAddress ia : ni.getInterfaceAddresses()) {
-
-                            // Obtém o endereço de broadcast da interface
-                            InetAddress broadcast = ia.getBroadcast();
-
-                            // Se o endereço de broadcast for válido, configura o pacote para ser enviado para esse endereço
-                            if (broadcast != null) {
-
-                                packet = new DatagramPacket(
-                                    data,
-                                    data.length,
-                                    broadcast,
-                                    8888
-                                );
-
-                                break;
-                            }
+                        // --- O SEGREDO ESTÁ AQUI ---
+                        // Pausa de 200ms entre cada interface para não inundar a rede
+                        try {
+                            Thread.sleep(200); 
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
                         }
                     }
-
-                    if (packet != null) break;
                 }
-
-                // Se não foi possível configurar o pacote para um endereço de broadcast válido, configura o pacote para ser enviado para o endereço de broadcast global
-                if (packet == null) {
-                    packet = new DatagramPacket(
-                        data,
-                        data.length,
-                        InetAddress.getByName("255.255.255.255"),
-                        8888
-                    );
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
             }
-    
-            pacotes.send(packet);
-    
+
+            // Se não encontrou interfaces específicas, tenta o broadcast global como último recurso
+            if (!sentAtLeastOne) {
+                DatagramPacket globalPacket = new DatagramPacket(
+                    data, data.length, InetAddress.getByName("255.255.255.255"), 8888
+                );
+                socket.send(globalPacket);
+            }
+
+            // Tenta receber a resposta
             byte[] buffer = new byte[256];
-    
-            DatagramPacket response =
-                    new DatagramPacket(buffer, buffer.length);
+            DatagramPacket response = new DatagramPacket(buffer, buffer.length);
 
-            try{
-                pacotes.receive(response);
-            }catch(SocketTimeoutException e){
-                System.out.println("Timeout waiting for server");
+            try {
+                socket.receive(response);
+                String msg = new String(response.getData(), 0, response.getLength());
+                System.out.println("Servidor encontrado: " + msg);
+                return msg;
+            } catch (SocketTimeoutException e) {
+                System.out.println("Timeout: Nenhum servidor respondeu.");
+            } finally {
+                socket.close(); // Importante fechar o socket
             }
-    
-            String msg = new String(response.getData(),0,response.getLength());
-    
-            System.out.println("Found server: " + msg);
-    
-            return msg;
-        } catch (IOException ioe) {
-            System.err.println(ioe);
-            return null;
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        return null;
     }
 }

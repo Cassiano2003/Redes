@@ -29,7 +29,8 @@ public class DateServer {
 
             sock.setSoTimeout(10000); // 10 seconds
             
-            while (System.currentTimeMillis() - start < maxTime) {
+            System.out.println("Type 'exit' to shut down the server.");
+            while (true) {
 
                 try {
                     Socket client = sock.accept();
@@ -44,12 +45,22 @@ public class DateServer {
                     System.out.println("Maximum clients reached. No longer accepting new connections.");
                     break;
                 }
+                
+                new Thread(() -> {
+                    try{
+                        String sair = new Scanner(System.in).nextLine();
+                        if (sair.equals("exit")) {
+                            System.out.println("Shutting down server...");
+                            System.out.println("Connected users: " + usuarios);
+                            sock.close();
+                            System.exit(0);
+                        }
+                    }catch (IOException e) {
+                        System.err.println("Error shutting down server: " + e.getMessage());
+                    }
+                }).start();
             }
             
-            System.out.println("Server timeout. Shutting down.");
-            sock.close();
-            System.out.println("Connected users: " + usuarios);
-            System.exit(0);
         } catch (IOException ioe) {
             System.err.println(ioe);
         }
